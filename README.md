@@ -34,13 +34,20 @@ Required:
 Optional:
 
 - `SPLUNK_HOST_FILTER` (required to send notifications; use the Linux AAaaS Astrée server host value)
+- `SPLUNK_BOARD_SERVER_QUERY` (full SPL for the server snapshot panel)
+- `SPLUNK_BOARD_PROCESSING_QUERY` (full SPL for the processing table panel)
+- `SPLUNK_BOARD_QUEUED_QUERY` (full SPL for the queued table panel)
+- `ASTREE_HISTORY_PATH` (path to a parquet history file for runtime baselines)
+- `MEM_FREE_THRESHOLD_GB` (free memory threshold for anomalies; default 16)
+- `MEM_TOTAL_SPIKE_GB` (total memory spike threshold; default 200)
+- `MEM_GROWTH_GB_PER_HOUR_THRESHOLD` (memory growth rate threshold; default 20)
 
 ## CLI Commands
 
 ```
 python -m astree_eta extract-history --months 6 --out data/history.parquet
 python -m astree_eta train --in data/history.parquet --out models/
-python -m astree_eta predict-live --interval-min 15 --out data/live_predictions.parquet
+python -m astree_eta predict-live --interval-min 15 --out data/live_predictions.parquet --history data/history.parquet
 python -m astree_eta notify --in data/live_predictions.parquet
 python -m astree_eta evaluate --in data/history.parquet --out reports/metrics.json
 ```
@@ -101,6 +108,18 @@ search index=$SPLUNK_INDEX$ sourcetype=$SPLUNK_SOURCETYPE$ app=$SPLUNK_APP$ host
     max(end_time) as end_time
     by run_id
 ```
+
+### AAaaS Linux server board snapshot (server summary)
+
+Expected fields: `processing_count`, `queued_count`, `total_mem_used_gb`, `free_mem_gb`, `timestamp`.
+
+### AAaaS Linux server board snapshot (processing table)
+
+Expected fields: `build_number`, `analysis_name`, `used_memory_gb`, `duration_hours`.
+
+### AAaaS Linux server board snapshot (queued table)
+
+Expected fields: `queued_timestamp`, `build_number`, `analysis_name`.
 
 ## Cron Example
 

@@ -39,8 +39,13 @@ class EmailNotifier:
 
 
 def render_notification(payload: dict) -> str:
+    queue_wait = payload.get("queue_wait_hours")
+    queue_wait_text = f"{queue_wait:.2f}" if isinstance(queue_wait, (int, float)) else "n/a"
+    anomalies = payload.get("anomaly_reasons") or "n/a"
     return (
         f"Run ID: {payload['run_id']}\n"
+        f"Build Number: {payload.get('build_number', 'n/a')}\n"
+        f"Analysis: {payload.get('analysis_name', 'n/a')}\n"
         f"Project: {payload['project_id']}\n"
         f"Host: {payload['host']}\n"
         f"Version: {payload['astree_version']}\n"
@@ -51,5 +56,7 @@ def render_notification(payload: dict) -> str:
         f"Interval (P10-P90): {payload['total_p10_hours']:.2f} - {payload['total_p90_hours']:.2f} h\n"
         f"Remaining: {payload['remaining_hours']:.2f} h\n"
         f"Progress: {payload['progress_pct']:.1f}%\n"
+        f"Queue wait estimate: {queue_wait_text} h\n"
+        f"Anomalies: {anomalies}\n"
         f"Splunk: {payload.get('splunk_url', 'n/a')}\n"
     )

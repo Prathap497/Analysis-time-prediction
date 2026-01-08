@@ -77,6 +77,8 @@ def build_completed_runs_query(config: SplunkConfig) -> str:
     return (
         f"{base} status=COMPLETED "
         "| stats latest(project_id) as project_id "
+        "latest(build_number) as build_number "
+        "latest(analysis_name) as analysis_name "
         "latest(astree_version) as astree_version "
         "latest(config_profile) as config_profile "
         "latest(host) as host "
@@ -98,6 +100,8 @@ def build_running_runs_query(config: SplunkConfig) -> str:
     return (
         f"{base} status=RUNNING "
         "| stats latest(project_id) as project_id "
+        "latest(build_number) as build_number "
+        "latest(analysis_name) as analysis_name "
         "latest(astree_version) as astree_version "
         "latest(config_profile) as config_profile "
         "latest(host) as host "
@@ -119,6 +123,8 @@ def build_status_transition_query(config: SplunkConfig) -> str:
     return (
         f"{base} (status=COMPLETED OR status=FAILED OR status=ABORTED) "
         "| stats latest(project_id) as project_id "
+        "latest(build_number) as build_number "
+        "latest(analysis_name) as analysis_name "
         "latest(astree_version) as astree_version "
         "latest(config_profile) as config_profile "
         "latest(host) as host "
