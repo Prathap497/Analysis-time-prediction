@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class RunRecord(BaseModel):
     run_id: str
+    build_number: Optional[str] = None
     project_id: str
     start_time: datetime
     end_time: Optional[datetime] = None
@@ -42,6 +43,8 @@ class RunRecord(BaseModel):
 
 class PredictionRecord(BaseModel):
     run_id: str
+    build_number: Optional[str] = None
+    analysis_name: Optional[str] = None
     project_id: str
     host: str
     status: str
@@ -54,6 +57,8 @@ class PredictionRecord(BaseModel):
     progress: float
     astree_version: str
     config_profile: str
+    queue_wait_sec: Optional[float] = None
+    anomaly_reasons: Optional[str] = None
     splunk_url: Optional[str] = None
     generated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -63,3 +68,28 @@ class NotificationRecord(BaseModel):
     event_type: str
     sent_at: datetime
     recipient: str
+
+
+class ServerSnapshot(BaseModel):
+    processing_count: int
+    queued_count: int
+    total_mem_used_gb: float
+    free_mem_gb: float
+    timestamp: datetime
+
+
+class AnalysisStatus(BaseModel):
+    build_number: Optional[str]
+    analysis_name: str
+    status: str
+    used_memory_gb: Optional[float] = None
+    duration_hours: Optional[float] = None
+    queued_timestamp: Optional[datetime] = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, value: str) -> str:
+        allowed = {"PROCESSING", "QUEUED"}
+        if value not in allowed:
+            raise ValueError(f"Invalid status: {value}")
+        return value

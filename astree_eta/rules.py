@@ -34,16 +34,23 @@ def should_notify(
     if state.last_status != prediction.status and prediction.status in {"COMPLETED", "FAILED", "ABORTED"}:
         events.append(_event("DONE", prediction))
 
-    if prediction.status == "RUNNING" and prediction.elapsed_sec > prediction.total_p90_sec:
+    if prediction.status in {"RUNNING", "PROCESSING"} and prediction.elapsed_sec > prediction.total_p90_sec:
         events.append(_event("DELAY", prediction))
 
     milestones = {"90": 0.9, "75": 0.75, "50": 0.5}
     for key, threshold in milestones.items():
-        if state.milestones.get(key, 0) == 0 and _milestone_crossed(prediction.progress, threshold):
+        if (
+            prediction.status in {"RUNNING", "PROCESSING"}
+            and state.milestones.get(key, 0) == 0
+            and _milestone_crossed(prediction.progress, threshold)
+        ):
             events.append(_event(f"MILESTONE_{key}", prediction))
 
-    if not state.last_status and prediction.status == "RUNNING":
+    if not state.last_status and prediction.status in {"RUNNING", "PROCESSING"}:
         events.append(_event("START", prediction))
+
+    if prediction.anomaly_reasons:
+        events.append(_event("ANOMALY", prediction))
 
     return events
 
@@ -52,6 +59,8 @@ def _event(event_type: str, prediction: PredictionRecord) -> NotificationEvent:
     subject = f"Astrée ETA Update [{event_type}] run {prediction.run_id}"
     payload = {
         "run_id": prediction.run_id,
+        "build_number": prediction.build_number,
+        "analysis_name": prediction.analysis_name,
         "project_id": prediction.project_id,
         "host": prediction.host,
         "astree_version": prediction.astree_version,
@@ -63,6 +72,8 @@ def _event(event_type: str, prediction: PredictionRecord) -> NotificationEvent:
         "total_p90_hours": prediction.total_p90_sec / 3600,
         "remaining_hours": prediction.remaining_sec / 3600,
         "progress_pct": prediction.progress * 100,
+        "queue_wait_hours": (prediction.queue_wait_sec or 0) / 3600 if prediction.queue_wait_sec is not None else None,
+        "anomaly_reasons": prediction.anomaly_reasons,
         "splunk_url": prediction.splunk_url,
     }
     return NotificationEvent(run_id=prediction.run_id, event_type=event_type, subject=subject, payload=payload)
