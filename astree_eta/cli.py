@@ -27,6 +27,10 @@ from astree_eta.store import NotificationStore
 logger = logging.getLogger(__name__)
 
 
+def _ensure_parent_dir(path: str) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+
+
 def _setup_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
@@ -55,6 +59,7 @@ def extract_history(args: argparse.Namespace) -> None:
     latest = "now"
     rows = list(client.export_search(search, earliest=earliest, latest=latest))
     df = pd.DataFrame(rows)
+    _ensure_parent_dir(args.out)
     df.to_parquet(args.out, index=False)
     logger.info("history extracted", extra={"rows": len(df), "out": args.out})
 
@@ -79,6 +84,7 @@ def predict_live(args: argparse.Namespace) -> None:
     df = pd.DataFrame(rows)
     df = prepare_inference_frame(df)
     if df.empty:
+        _ensure_parent_dir(args.out)
         df.to_parquet(args.out, index=False)
         logger.info("no running runs", extra={"out": args.out})
         return
@@ -98,6 +104,7 @@ def predict_live(args: argparse.Namespace) -> None:
     df["remaining_sec"] = np.maximum(df["total_p50_sec"] - df["elapsed_sec"], 0)
     df["progress"] = np.minimum(df["elapsed_sec"] / np.maximum(df["total_p50_sec"], 1), 0.999)
     df["splunk_url"] = df["run_id"].apply(lambda run_id: _splunk_link(run_id, config))
+    _ensure_parent_dir(args.out)
     df.to_parquet(args.out, index=False)
     logger.info("live predictions", extra={"rows": len(df), "out": args.out})
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, Optional
 
 
@@ -20,6 +21,7 @@ class NotificationStore:
         self._init_db()
 
     def _init_db(self) -> None:
+        Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.path) as conn:
             conn.execute(
                 """
