@@ -23,3 +23,9 @@ def test_throttle(tmp_path):
     state = store.get_state("run-2")
     assert store.can_send(state, now + timedelta(minutes=16), 15)
     assert not store.can_send(state, now + timedelta(minutes=5), 15)
+
+
+def test_store_creates_parent_directory(tmp_path):
+    db_path = tmp_path / "nested" / "notify.db"
+    NotificationStore(str(db_path))
+    assert db_path.exists()
