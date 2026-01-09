@@ -1,0 +1,2 @@
+*/15 * * * * /usr/bin/python -m astree_eta predict-live --interval-min 15 --out /var/astree_eta/live_predictions.parquet --model-dir /var/astree_eta/models
+*/15 * * * * /usr/bin/python -m astree_eta notify --in /var/astree_eta/live_predictions.parquet --db-path /var/astree_eta/notifications.db

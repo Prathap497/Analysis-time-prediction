@@ -1,4 +1,8 @@
+joblib
 numpy
 pandas
+pydantic
+pyarrow
 requests
 scikit-learn
+pytest
